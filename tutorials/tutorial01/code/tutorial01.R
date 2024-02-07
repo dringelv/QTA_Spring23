@@ -44,21 +44,21 @@ capture.output(xml_structure(html))
 
 # html nodes using html_nodes()
 html %>%
-  html_nodes() # try searching for the table node
+  html_nodes("table") # try searching for the table node
 
 html %>% 
-  html_nodes() # try searching using the class (add a dot)
+  html_nodes(".ds-table") # try searching using the class (add a dot)
 
 # xpaths
 # To search using xpath selectors, we need to add the xpath argument.
 html %>%
-  html_nodes(xpath = "//table")
+  html_nodes(xpath = "//table[position()=1]")
 
 # Here's a useful guide to xpath syntax: https://www.w3schools.com/xml/xpath_syntax.asp
 
 # Try selecting the first node of the table class, and assign it to a new object
 tab1 <- html %>%
-  html_nodes()
+  html_nodes(xpath = "//table[position()=1]")
 
 # Let's look at the structure of this node. We could use the xml_structure() 
 # function, but the html is still too big. Try inspecting the object in the 
@@ -66,7 +66,8 @@ tab1 <- html %>%
 
 # We basically want "thead" and "tbody". How might we get those?
 tab2 <- tab1 %>%
-  html_nodes()
+  html_nodes(xpath = "//table/thead | //table/tbody")
+tab2
 
 # We now have an object containing 2 lists. With a bit of work we can extract 
 # the text we want as a vector:
@@ -88,9 +89,10 @@ xml_children(tab1)
 # "thead" node, and our data are in the "tbody" node. The html_table() function 
 # can parse this type of structure automatically. Try it out, and assign the 
 # result to an object.
-dat <- 
+dat <- html_table(tab1, header = TRUE)[[1]] # like opening the box and taking out the data frame, extracts the df from the list
+print(dat)
 
-dat %>%
+dat %>% # need to do the [[1]] thing to be able to use ggplot because it uses dfs
   filter(grepl("ENG|AUS", Player)) %>%
   ggplot(aes(Balls, Wkts)) +
     geom_text(aes(label = Player)) +
@@ -103,3 +105,23 @@ dat %>%
 # Now that we've managed to do that for bowlers, try completing all the steps 
 # yourselves on a new html - top international batsmen!
 batsmen <- "https://stats.espncricinfo.com/ci/content/records/223646.html"
+html1 <- read_html(batsmen)
+
+# Try selecting the first node of the table class, and assign it to a new object
+tab3 <- html1 %>%
+  html_nodes(xpath = "//table[position()=1]")
+
+tab3 <- html1 %>%
+  html_nodes(xpath = "//table/thead | //table/tbody")
+tab2
+
+xml_children(tab2)
+
+dat1 <- html_table(tab2, header = TRUE)[[1]] # like opening the box and taking out the data frame, extracts the df from the list
+print(dat)
+
+dat1 %>% # need to do the [[1]] thing to be able to use ggplot because it uses dfs
+  filter(grepl("ENG|AUS", Player)) %>%
+  ggplot(aes(Runs, BF)) +
+  geom_text(aes(label = Player)) +
+  geom_smooth(method = "lm")
